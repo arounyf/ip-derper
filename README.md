@@ -9,6 +9,29 @@ runyf/ip-derper:v1.70.0
 ```
 
 
+#### json配置参考
+```shell
+{
+  "Regions": {
+    "901": {
+      "RegionID": 901,
+      "RegionCode": "derp-cd",
+      "RegionName": "derp-chengdu",
+      "Nodes": [
+        {
+          "Name": "901a",
+          "RegionID": 901,
+          "DERPPort": 443,
+          "HostName": "xxxx",
+          "IPv4": "xxxx",
+          "InsecureForTests": true
+        }
+      ]
+    }
+  }
+}
+```
+
 ####  常见错误(适用headscale)
 ```shell
 
@@ -27,3 +50,4 @@ runyf/ip-derper:v1.70.0
 #     - Tailscale could not connect to the 'test' relay server. Your Internet connection might be down, or the server might be temporarily unavailable.
 ```
 deper的端口不通
+
