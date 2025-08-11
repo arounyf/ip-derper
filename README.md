@@ -7,7 +7,19 @@ docker run \
   -e DERP_ADDR=:12345 \
 runyf/ip-derper:v1.70.0
 ```
-
+#### docker-compose
+```shell
+services:
+  ip_derper:
+    image: runyf/ip-derper:v1.70.0
+    container_name: ip_derper
+    ports:
+      - "3478:3478/udp"
+      - "12345:12345"
+    environment:
+      - DERP_ADDR=:12345
+    restart: unless-stopped
+```
 
 #### json配置参考
 ```shell
@@ -50,4 +62,5 @@ runyf/ip-derper:v1.70.0
 #     - Tailscale could not connect to the 'test' relay server. Your Internet connection might be down, or the server might be temporarily unavailable.
 ```
 deper的端口不通
+
 
