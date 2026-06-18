@@ -1,34 +1,40 @@
 # ip-derper — Tailscale DERP 中继（纯 IP，无需域名）
 
 基于 [Tailscale v1.98.3](https://github.com/tailscale/tailscale/releases/tag/v1.98.3) 的 `cmd/derper`。
+**无需修改源码**，开箱即用。
 
-## 纯 IP 搭建关键
+## 纯 IP 为什么能工作
 
-derper 服务器使用自签证书时，证书与 IP/域名不匹配会导致 TLS 握手失败。需要满足以下两点：
+v1.98+ 的 derper 内置了两个关键逻辑（`tailscale/cmd/derper/cert.go`）：
 
-### 1. derper 服务器不验证域名
+### 1. `noHostname` — 自动跳过域名校验
 
-修改 `tailscale/cmd/derper/cert.go`，注释掉 `getCertificate` 中的域名校验：
+`NewManualCertManager` 检测到 hostname 是 IP 地址时，设置 `noHostname = true`：
 
 ```go
-func (m *manualCertManager) getCertificate(hi *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	// 注释掉域名校验，支持纯 IP 部署（自签证书与 IP 不匹配也能用）
-	//if hi.ServerName != m.hostname && !m.noHostname {
-	//	return nil, fmt.Errorf("cert mismatch with hostname: %q", hi.ServerName)
-	//}
+noHostname: net.ParseIP(hostname) != nil,  // IP → true, 域名 → false
+```
 
-	// Return a shallow copy of the cert so the caller can append to its
-	// Certificate field.
-	certCopy := new(tls.Certificate)
-	*certCopy = *m.cert
-	certCopy.Certificate = certCopy.Certificate[:len(certCopy.Certificate):len(certCopy.Certificate)]
-	return certCopy, nil
+后续 `getCertificate` 中：
+
+```go
+if hi.ServerName != m.hostname && !m.noHostname {
+    // noHostname=true 时 !m.noHostname=false，整段跳过
+    // 纯 IP 部署不会触发证书域名不匹配错误
 }
 ```
 
-### 2. tailscale 客户端不验证域名
+### 2. 自动生成 IP 自签证书
 
-客户端连接 derper 时，DERP map 中必须设置 `InsecureForTests: true`，跳过自签证书验证。
+证书文件不存在时，`createSelfSignedIPCert` 自动创建带 IP SAN 的自签证书，无需手动申请。
+
+### 3. 客户端仍需 `InsecureForTests: true`
+
+derper 端没问题了，但 tailscale 客户端仍会验证证书。DERP map 中必须设置：
+
+```json
+"InsecureForTests": true
+```
 
 ---
 
@@ -43,8 +49,6 @@ docker run \
   -e DERP_HOST=<你的公网IP> \
   runyf/ip-derper:v1.98.3
 ```
-
-首次启动自动生成自签证书。`DERP_HOST` 填你的公网 IP。
 
 ## docker-compose
 
