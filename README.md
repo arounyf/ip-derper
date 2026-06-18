@@ -1,7 +1,12 @@
 # ip-derper — Tailscale DERP 中继（纯 IP，无需域名）
 
+> **⚠️ 本项目已归档，不再维护。**
+>
+> 自 Tailscale v1.98 起，`cmd/derper` 已原生支持纯 IP 部署（`noHostname` + 自动自签证书），无需任何源码修改。直接使用上游 derper 即可，本项目的 Dockerfile 封装已无必要。
+>
+> 下方文档保留供参考。建议直接使用 [tailscale/cmd/derper](https://github.com/tailscale/tailscale/tree/main/cmd/derper) 配合 `InsecureForTests: true`。
+
 基于 [Tailscale v1.98.3](https://github.com/tailscale/tailscale/releases/tag/v1.98.3) 的 `cmd/derper`。
-**无需修改源码**，开箱即用。
 
 ## 纯 IP 为什么能工作
 
