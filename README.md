@@ -1,28 +1,42 @@
-#### 运行容器命令
+# ip-derper — Tailscale DERP 中继（纯 IP，无需域名）
+
+基于 [Tailscale v1.98.3](https://github.com/tailscale/tailscale/releases/tag/v1.98.3) 的 `cmd/derper`。
+
+**新版不再需要修改源码** — v1.98+ 的 derper 已内置 IP 自签证书自动生成和 `noHostname` 逻辑。
+
+## 快速启动
+
 ```shell
 docker run \
   -p 3478:3478/udp \
   -p 12345:12345 \
   --name ip_derper \
   -e DERP_ADDR=:12345 \
-runyf/ip-derper:v1.70.0
+  -e DERP_HOST=<你的公网IP> \
+  runyf/ip-derper:v1.98.3
 ```
-#### docker-compose
+
+首次启动自动生成自签证书。`DERP_HOST` 填你的公网 IP。
+
+## docker-compose
+
 ```shell
 services:
   ip_derper:
-    image: runyf/ip-derper:v1.70.0
+    image: runyf/ip-derper:v1.98.3
     container_name: ip_derper
     ports:
       - "3478:3478/udp"
       - "12345:12345"
     environment:
       - DERP_ADDR=:12345
+      - DERP_HOST=<你的公网IP>
     restart: unless-stopped
 ```
 
-#### json配置参考
-```shell
+## DERP JSON 配置（供 headscale）
+
+```json
 {
   "Regions": {
     "901": {
@@ -33,9 +47,9 @@ services:
         {
           "Name": "901a",
           "RegionID": 901,
-          "DERPPort": 443,
-          "HostName": "xxxx",
-          "IPv4": "xxxx",
+          "DERPPort": 12345,
+          "HostName": "<你的公网IP>",
+          "IPv4": "<你的公网IP>",
           "InsecureForTests": true
         }
       ]
@@ -44,23 +58,18 @@ services:
 }
 ```
 
-####  常见错误(适用headscale)
-```shell
+**`InsecureForTests: true` 必须设置**，否则客户端会拒绝自签证书。
 
+## 常见错误
+
+```
 # Health check:
 #     - not connected to home DERP region 902
 ```
-没有设置InsecureForTests为true，需要使用json配置才能支持
+DERP JSON 中 `InsecureForTests` 没设为 true。
 
-```shell
-# Health check:
-#     - TLS connection error for "": certificate is self-signed
 ```
-提示TLS连接错误，但并不影响使用
-```shell
 # Health check:
-#     - Tailscale could not connect to the 'test' relay server. Your Internet connection might be down, or the server might be temporarily unavailable.
+#     - TLS connection error: certificate is self-signed
 ```
-deper的端口不通
-
-
+提示但通常不影响使用——客户端仍会连接。
